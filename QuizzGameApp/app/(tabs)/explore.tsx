@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Animated } from 'react-native';
 import useSettings from '../../hooks/useSettings';
-import useGame from '../../hooks/useGame';
 import QuizzDialog from '../../components/QuizzDialog';
 import SettingsDialog from '../../components/SettingsDialog';
+import useGameCore from '../../hooks/useGameCore';
 
 const CustomIcon = ({ lifeEmoji }: { lifeEmoji: string }) => {
   return (
@@ -21,32 +21,34 @@ const GameScreen: React.FC = () => {
     settingsVisible,
     setSettingsVisible,
     saveCustomEmojis,
+    game,
   } = useSettings();
-
-  const onCorrectAnswer = () => {
-    console.log('Correct answer!'); // Handle correct answer logic here
-  };
 
   const {
     movingPlayerX,
-    lives,
-    points,
+    onCorrectAnswer,
+    onWrongAnswer,
     isTouching,
-    displayQuiz,
-    isGameOver,
     obstacles,
     countdown,
     handleTouchStart,
     handleTouchEnd,
-    onWrongAnswer,
-    onCorrectAnswerHandler,
-  } = useGame({
-    onCorrectAnswer, 
-    playerEmoji, 
-    obstacleEmoji, 
-    settingsVisible
-  });
-
+    restartGame,
+    gameCore
+  } = game as {
+    movingPlayerX: number;
+    onCorrectAnswer: () => void;
+    onWrongAnswer: () => void;
+    isTouching: boolean;
+    isQuizToAnswer: boolean;
+    obstacles: { id: number; left: Animated.Value; hasHit: boolean; }[];
+    countdown: number;
+    handleTouchStart: () => void;
+    handleTouchEnd: () => void;
+    restartGame: () => void;
+    gameCore: ReturnType<typeof useGameCore>;
+  };
+  
   return (
     <TouchableOpacity
       onPressIn={handleTouchStart}
@@ -67,22 +69,30 @@ const GameScreen: React.FC = () => {
         defaultLifeEmoji={lifeEmoji}
       />
 
-      <QuizzDialog visible={displayQuiz} isGameOver={isGameOver} onWrongAnswer={onWrongAnswer} onCorrectAnswer={onCorrectAnswerHandler} />
+      <QuizzDialog
+        visible={gameCore.isQuizToAnswer}
+        isGameOver={gameCore.isGameOver}
+        onAnswer={gameCore.onAnswer({
+          onCorrectAnswer,
+          onWrongAnswer,
+          restartGame
+        })}
+      />
 
-      <Text style={styles.statusText}>{`Points: ${points}`}</Text>
+      <Text style={styles.statusText}>{`Points: ${gameCore.points}`}</Text>
 
       <View style={styles.livesContainer}>
-        {!isGameOver && Array.from({ length: lives }).map((_, index) => <CustomIcon key={index} lifeEmoji={lifeEmoji} />)}
+        {!gameCore.isGameOver && Array.from({ length: Number(gameCore.lives) }).map((_, index) => <CustomIcon key={index} lifeEmoji={lifeEmoji} />)}
       </View>
 
-      {!isGameOver && <Text style={[styles.movingPlayer, { left: movingPlayerX, transform: [{ scaleX: isTouching ? 1 : -1 }] }]}>{playerEmoji}</Text>}
+      {!gameCore.isGameOver && <Text style={[styles.movingPlayer, { left: movingPlayerX, transform: [{ scaleX: isTouching ? 1 : -1 }] }]}>{playerEmoji}</Text>}
 
       {obstacles.map((obstacle) => (
         <Animated.View key={obstacle.id} style={[styles.obstacle, { left: obstacle.left }]}>
           <Text style={styles.obstacleEmoji}>{obstacleEmoji}</Text>
         </Animated.View>
       ))}
-            <Text style={styles.timerText}>{`Time Left: ${countdown}s`}</Text>
+      <Text style={styles.timerText}>{`Time Left: ${countdown}s`}</Text>
     </TouchableOpacity>
   );
 };

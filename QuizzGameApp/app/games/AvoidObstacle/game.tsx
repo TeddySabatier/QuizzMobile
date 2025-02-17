@@ -1,31 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
 import { Animated, Dimensions } from 'react-native';
 
-interface UseGameProps {
-  onCorrectAnswer: () => void;
+import { GameCore } from '@/hooks/useGameCore';
+
+interface useAvoidObstacleGameProps {
   playerEmoji: string;
   obstacleEmoji: string;
   settingsVisible: boolean;
+  gameCore: GameCore;
 }
 
 const { width } = Dimensions.get('window');
 const movingPlayerX = width / 4;
 
-const useGame = ({ onCorrectAnswer, playerEmoji, obstacleEmoji, settingsVisible }: UseGameProps) => {
-  const [lives, setLives] = useState(3);
-  const [points, setPoints] = useState(0);
+const useAvoidObstacleGame = ({ playerEmoji, obstacleEmoji, settingsVisible, gameCore }: useAvoidObstacleGameProps) => {
+  const [countdown, setCountdown] = useState(5); // Timer state for countdown
   const [isTouching, setIsTouching] = useState(false);
-  const [isGameOver, setIsGameOver] = useState(false);
   const [obstacles, setObstacles] = useState<{ id: number; left: Animated.Value; hasHit: boolean }[]>([]);
   const [obstacleSpeed, setObstacleSpeed] = useState(4000);
-  const [quizVisible, setQuizVisible] = useState(false); // New state for quiz visibility
-  const [countdown, setCountdown] = useState(5); // Timer state for countdown
   const touchTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const displayQuiz = quizVisible || isGameOver;
+  const { isQuizToAnswer } = gameCore;
   useEffect(() => {
     // Handle obstacle generation and movement logic
-    if (!displayQuiz && !settingsVisible) {
+    if (!isQuizToAnswer && !settingsVisible) {
       const interval = setInterval(() => {
         const newObstacle = {
           id: Math.random(),
@@ -48,47 +46,47 @@ const useGame = ({ onCorrectAnswer, playerEmoji, obstacleEmoji, settingsVisible 
 
       return () => clearInterval(interval);
     }
-  }, [displayQuiz, obstacleSpeed]);
+  }, [isQuizToAnswer, obstacleSpeed]);
 
   useEffect(() => {
     // Speed up obstacles every 30 seconds
     const speedInterval = setInterval(() => {
-      if (!displayQuiz && !settingsVisible) {
+      if (!isQuizToAnswer && !settingsVisible) {
         setObstacleSpeed((prevSpeed) => Math.max(prevSpeed - 500, 1500));
       }
     }, 30000);
 
     return () => clearInterval(speedInterval);
-  }, [displayQuiz]);
+  }, [isQuizToAnswer]);
 
   useEffect(() => {
     // Countdown timer logic
-    if (!displayQuiz && !settingsVisible) {
+    if (!isQuizToAnswer && !settingsVisible) {
       if (countdown > 0) {
         const timerInterval = setInterval(() => {
-          setPoints((prev) => Math.round((prev + 0.05)*100)/100);
+          gameCore.earnPoint(0.05);
           setCountdown((prev) => prev - 1);
         }, 1000);
 
         return () => clearInterval(timerInterval);
       } else {
         // When the timer reaches 0, show the quiz
-        setQuizVisible(true);
+        gameCore.showQuiz();
         setCountdown(20); // Reset the timer for the next round
       }
     }
-  }, [countdown, displayQuiz, settingsVisible]);
+  }, [countdown, isQuizToAnswer, settingsVisible]);
 
   useEffect(() => {
     // Collision detection and losing lives logic
     const checkCollision = setInterval(() => {
-      if(displayQuiz) return;  // Don't check for collisions when the quiz is visible
+      if (isQuizToAnswer) return;  // Don't check for collisions when the quiz is visible
       setObstacles((prevObstacles) =>
         prevObstacles.map((obstacle) => {
           const obsX = obstacle.left._value;
 
           if (Math.abs(movingPlayerX - obsX) < 20 && !isTouching && !obstacle.hasHit) {
-            loseLife();
+            gameCore.loseLife();
             return { ...obstacle, hasHit: true };
           }
           return obstacle;
@@ -97,7 +95,7 @@ const useGame = ({ onCorrectAnswer, playerEmoji, obstacleEmoji, settingsVisible 
     }, 100);
 
     return () => clearInterval(checkCollision);
-  }, [obstacles, isTouching, displayQuiz]);
+  }, [obstacles, isTouching, isQuizToAnswer]);
 
   const handleTouchStart = () => {
     setIsTouching(true);
@@ -110,62 +108,42 @@ const useGame = ({ onCorrectAnswer, playerEmoji, obstacleEmoji, settingsVisible 
   const handleTouchEnd = () => {
     setIsTouching(false);
   };
-
-  const loseLife = () => {
-    if (lives > 1) {
-      setLives((prevLives) => prevLives - 1);
-    } else {
-      setIsGameOver(true);
-    }
+  const restartGameCallBack = () => {
+    setObstacles([]);
+    setObstacleSpeed(4000);
+    setCountdown(20);  // Reset the timer
   };
 
   const restartGame = () => {
-    setLives(3);
-    setIsGameOver(false);
-    setObstacles([]);
-    setPoints(0);
-    setObstacleSpeed(4000);
-    setQuizVisible(false);  // Hide quiz when restarting the game
-    setCountdown(20);  // Reset the timer
-  };
-  const onAnswer = () => {
-    if (lives > 0) {
-      setIsGameOver(false);
-      setQuizVisible(false);  // Hide quiz after answering correctly
-      setCountdown(20);  // Reset the timer after the quiz
-      onCorrectAnswer();
-    }
-  };
-
-  const onCorrectAnswerHandler = () => {
-    setLives((prev) => prev + 1);
-    setPoints((prev) => prev + 1);
-    onAnswer();
-  };
-
+    gameCore.restartGame({ callback: restartGameCallBack });
+  }
+  const sharedAnswerLogic = () => {
+    setCountdown(20);  // Reset the timer after the quiz
+  }
+  const onCorrectAnswer = () => {
+    sharedAnswerLogic();
+    gameCore.earnLife(1);
+    gameCore.earnPoint(1);
+  }
   const onWrongAnswer = () => {
-    onAnswer();
-    if(lives < 0) {
-      restartGame();
-    }
-  };
+    sharedAnswerLogic();
+  }
 
   return {
     movingPlayerX,
-    lives,
-    points,
+    onCorrectAnswer,
+    onWrongAnswer,
     isTouching,
-    displayQuiz,
-    isGameOver,
+    isQuizToAnswer,
     obstacles,
     playerEmoji,
     obstacleEmoji,
     countdown,
     handleTouchStart,
     handleTouchEnd,
-    onWrongAnswer,
-    onCorrectAnswerHandler,
+    restartGame,
+    gameCore
   };
 };
 
-export default useGame;
+export { useAvoidObstacleGame };

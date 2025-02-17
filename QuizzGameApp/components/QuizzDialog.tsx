@@ -4,8 +4,7 @@ import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 interface QuizzDialogProps {
   visible: boolean;
   isGameOver: boolean;
-  onWrongAnswer: () => void;
-  onCorrectAnswer: () => void;
+  onAnswer: (isCorrect: Boolean) => void;
 }
 
 interface TriviaQuestion {
@@ -14,7 +13,7 @@ interface TriviaQuestion {
   incorrect_answers: string[];
 }
 
-const QuizzDialog: React.FC<QuizzDialogProps> = ({ visible, isGameOver, onWrongAnswer, onCorrectAnswer }) => {
+const QuizzDialog: React.FC<QuizzDialogProps> = ({ visible, isGameOver, onAnswer }) => {
   const [question, setQuestion] = useState<string | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
@@ -36,11 +35,12 @@ const QuizzDialog: React.FC<QuizzDialogProps> = ({ visible, isGameOver, onWrongA
     }
   }, [visible]);
 
+  console.log(correctAnswer)
   const handleAnswer = (answer: string) => {
     if (answer === correctAnswer) {
-      onCorrectAnswer(); // Give an extra life
+      onAnswer(true); // Give an extra life
     } else {
-      onWrongAnswer(); // Restart the game
+      onAnswer(false); // Restart the game
     }
   };
 
@@ -48,23 +48,23 @@ const QuizzDialog: React.FC<QuizzDialogProps> = ({ visible, isGameOver, onWrongA
     <Modal animationType="slide" transparent visible={visible}>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
-          {isGameOver &&<Text style={styles.gameOverText}>Game Over</Text>}
-            {question && (
-              <View>
-                <Text style={styles.questionText}>{decodeHtmlEntities(question)}</Text>
-                {answers.map((answer, index) => (
-                  <TouchableOpacity key={index} style={styles.answerButton} onPress={() => handleAnswer(answer)}>
-                    <Text style={styles.answerText}>{answer}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
+          {isGameOver && <Text style={styles.gameOverText}>Game Over</Text>}
+          {question && (
+            <View>
+              <Text style={styles.questionText}>{decodeHtmlEntities(question)}</Text>
+              {answers.map((answer, index) => (
+                <TouchableOpacity key={index} style={styles.answerButton} onPress={() => handleAnswer(answer)}>
+                  <Text style={styles.answerText}>{ decodeHtmlEntities(answer)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
-      </Modal>
-    );
-  };
-  
+      </View>
+    </Modal>
+  );
+};
+
 const decodeHtmlEntities = (text: string): string => {
   return text
     .replace(/&quot;/g, '"')  // Double quotes
@@ -77,7 +77,7 @@ const decodeHtmlEntities = (text: string): string => {
     .replace(/&ldquo;/g, '"') // Left double quote
     .replace(/&rdquo;/g, '"'); // Right double quote
 };
-  
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
   },
-  
+
 });
 
 export default QuizzDialog;
