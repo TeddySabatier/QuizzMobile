@@ -15,13 +15,12 @@ const CustomIcon = ({ lifeEmoji }: { lifeEmoji: string }) => {
 
 const GameScreen: React.FC = () => {
   const {
-    playerEmoji,
-    obstacleEmoji,
-    lifeEmoji,
     settingsVisible,
     setSettingsVisible,
-    saveCustomEmojis,
     game,
+    gameSettings,
+    SettingsGameDialog,
+    gameType
   } = useSettings();
 
   const {
@@ -63,10 +62,9 @@ const GameScreen: React.FC = () => {
       <SettingsDialog
         visible={settingsVisible}
         onClose={() => setSettingsVisible(false)}
-        onSave={saveCustomEmojis}
-        defaultPlayerEmoji={playerEmoji}
-        defaultObstacleEmoji={obstacleEmoji}
-        defaultLifeEmoji={lifeEmoji}
+        SettingsGameDialog={SettingsGameDialog}
+        defaultGameType={gameType}
+        gameSettings={gameSettings}
       />
 
       <QuizzDialog
@@ -82,14 +80,14 @@ const GameScreen: React.FC = () => {
       <Text style={styles.statusText}>{`Points: ${gameCore.points}`}</Text>
 
       <View style={styles.livesContainer}>
-        {!gameCore.isGameOver && Array.from({ length: Number(gameCore.lives) }).map((_, index) => <CustomIcon key={index} lifeEmoji={lifeEmoji} />)}
+        {!gameCore.isGameOver && Array.from({ length: Number(gameCore.lives) }).map((_, index) => <CustomIcon key={index} lifeEmoji={gameSettings.lifeEmoji} />)}
       </View>
 
-      {!gameCore.isGameOver && <Text style={[styles.movingPlayer, { left: movingPlayerX, transform: [{ scaleX: isTouching ? 1 : -1 }] }]}>{playerEmoji}</Text>}
+      {!gameCore.isGameOver && <Text style={[styles.movingPlayer, { left: movingPlayerX, transform: [{ scaleX: isTouching ? 1 : -1 }] }]}>{gameSettings.playerEmoji}</Text>}
 
       {obstacles.map((obstacle) => (
         <Animated.View key={obstacle.id} style={[styles.obstacle, { left: obstacle.left }]}>
-          <Text style={styles.obstacleEmoji}>{obstacleEmoji}</Text>
+          <Text style={styles.obstacleEmoji}>{gameSettings.obstacleEmoji}</Text>
         </Animated.View>
       ))}
       <Text style={styles.timerText}>{`Time Left: ${countdown}s`}</Text>

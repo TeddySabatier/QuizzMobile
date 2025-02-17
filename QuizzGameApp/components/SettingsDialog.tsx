@@ -1,45 +1,76 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Picker } from 'react-native';
 
 interface SettingsDialogProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (fish: string, shark: string, heart: string) => void;
-  defaultPlayerEmoji: string;
-  defaultObstacleEmoji: string;
-  defaultLifeEmoji: string;
+  onSave: (gameType: 'avoidObstacle' | 'default') => void;
+  defaultGameType: 'avoidObstacle' | 'default';
+  SettingsGameDialog: React.FC;
+  gameSettings: any;
 }
 
-const SettingsDialog: React.FC<SettingsDialogProps> = ({ visible, onClose, onSave, defaultPlayerEmoji, defaultObstacleEmoji, defaultLifeEmoji }) => {
-  const [playerEmoji, setplayerEmoji] = useState(defaultPlayerEmoji);
-  const [obstacleEmoji, setobstacleEmoji] = useState(defaultObstacleEmoji);
-  const [lifeEmoji, setlifeEmoji] = useState(defaultLifeEmoji);
+const SettingsDialog: React.FC<SettingsDialogProps> = ({ visible, onClose, onSave, defaultGameType, SettingsGameDialog, gameSettings }) => {
+  const [gameType, setGameType] = useState<'avoidObstacle' | 'default'>(defaultGameType);
+
+  // State to handle sub-menu visibility for customizing the emoji
+  const [isEmojiSubMenuVisible, setIsEmojiSubMenuVisible] = useState(false);
+
+  // Function to handle game type change
+  const handleGameTypeChange = (selectedGameType: 'avoidObstacle' | 'default') => {
+    setGameType(selectedGameType);
+
+    // Close sub-menu when game type changes
+    setIsEmojiSubMenuVisible(false);
+  };
 
   return (
     <Modal animationType="slide" transparent visible={visible}>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
-          <Text style={styles.title}>Customize Emojis</Text>
+          <Text style={styles.title}>Customize Game Settings</Text>
 
+          {/* Game Type Selection */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Fish Emoji:</Text>
-            <TextInput style={styles.input} value={playerEmoji} onChangeText={setplayerEmoji} />
+            <Text style={styles.label}>Select Game Type:</Text>
+            <Picker
+              selectedValue={gameType}
+              style={styles.picker}
+              onValueChange={handleGameTypeChange}
+            >
+              <Picker.Item label="Avoid Obstacle" value="avoidObstacle" />
+              <Picker.Item label="Default Game" value="default" />
+            </Picker>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Shark Emoji:</Text>
-            <TextInput style={styles.input} value={obstacleEmoji} onChangeText={setobstacleEmoji} />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Heart Emoji:</Text>
-            <TextInput style={styles.input} value={lifeEmoji} onChangeText={setlifeEmoji} />
-          </View>
-
-          <TouchableOpacity style={styles.saveButton} onPress={() => onSave(playerEmoji, obstacleEmoji, lifeEmoji)}>
-            <Text style={styles.saveText}>Save</Text>
+          {/* Show Sub-menu for Emoji Customization */}
+          <TouchableOpacity
+            style={styles.subMenuButton}
+            onPress={() => setIsEmojiSubMenuVisible(true)}
+          >
+            <Text style={styles.subMenuText}>Game menu</Text>
           </TouchableOpacity>
 
+          {isEmojiSubMenuVisible && 
+            <SettingsGameDialog 
+              {...gameSettings}
+              visible={isEmojiSubMenuVisible}
+              onClose={() => setIsEmojiSubMenuVisible(false)}
+            />
+          }
+
+          {/* Save Game Type Selection */}
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={() => {
+              onSave(gameType); // Save the selected game type
+              onClose(); // Close the main dialog
+            }}
+          >
+            <Text style={styles.saveText}>Save Game Type and Categories</Text>
+          </TouchableOpacity>
+
+          {/* Close Main Dialog */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeText}>Close</Text>
           </TouchableOpacity>
@@ -76,13 +107,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  input: {
-    borderWidth: 1,
+  picker: {
+    width: '100%',
+    height: 40,
     borderColor: 'gray',
+    borderWidth: 1,
     borderRadius: 5,
-    padding: 5,
+  },
+  subMenuButton: {
+    marginTop: 15,
+    backgroundColor: 'lightblue',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  subMenuText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  subMenu: {
+    marginTop: 20,
+    backgroundColor: '#f7f7f7',
+    padding: 10,
+    borderRadius: 5,
+    width: '100%',
+    alignItems: 'center',
+  },
+  subMenuTitle: {
     fontSize: 18,
-    textAlign: 'center',
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   saveButton: {
     backgroundColor: 'black',

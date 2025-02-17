@@ -1,63 +1,66 @@
-import { useState, useEffect } from 'react';
-import useGameCore from './useGameCore';
-import { useAvoidObstacleGame } from '@/app/games/AvoidObstacle/game';
+import { useState } from 'react';
+import useGameCore, { GameCore } from './useGameCore';
+import * as avoidObstacle from '@/app/games/AvoidObstacle';
 
 // Define the types for the custom hook
 interface SettingsProps {
-  playerEmoji: string;
-  obstacleEmoji: string;
-  lifeEmoji: string;
   settingsVisible: boolean;
   setSettingsVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  saveCustomEmojis: (newFish: string, newShark: string, newHeart: string) => void;
   saveGameChosen: (gameChosen: GameType) => void;
-  game: ReturnType<typeof useAvoidObstacleGame> | ReturnType<typeof useGameCore>;
+  game: ReturnType<typeof avoidObstacle.useGame> | ReturnType<typeof useGameCore>;
+  gameSettings: ReturnType<typeof avoidObstacle.useGameSettings>;
+  SettingsGameDialog: React.FC;
   gameType: GameType;
 }
 
 export type GameType = 'avoidObstacle' | 'default';
-export type GameHook = (props: any) => ReturnType<typeof useGameCore> | ReturnType<typeof useAvoidObstacleGame>;
+export type GameHook = (props: any) => {
+  gameLogic: ReturnType<typeof useGameCore> | ReturnType<typeof avoidObstacle.useGame>;
+  gameSettings: ReturnType<typeof avoidObstacle.useGameSettings>;
+  SettingsGameDialog?: React.FC;
+};
+
+interface GameHookProps {
+  gameCore: GameCore;
+  settingsVisible: boolean;
+}
 
 const gameHooks: Record<GameType, GameHook> = {
-  avoidObstacle: useAvoidObstacleGame,
-  default: useGameCore, // A fallback or base game mode
+  avoidObstacle: ({ gameCore, settingsVisible }: GameHookProps) => {
+    // Game logic for avoidObstacle
+    const gameSettings = avoidObstacle.useGameSettings(); // Use settings specific to AvoidObstacle
+    const gameLogic = avoidObstacle.useGame({ gameCore, settingsVisible, ...gameSettings });
+    return { gameLogic, gameSettings, SettingsGameDialog: avoidObstacle.SettingsDialog };
+  },
+  default: ({ gameCore }: GameHookProps) => {
+    // Game logic for default
+    const gameSettings = avoidObstacle.useGameSettings(); // Use default game settings
+    return { gameLogic: gameCore, gameSettings };
+  },
 };
 
 const useSettings = (): SettingsProps => {
-  const [playerEmoji, setPlayerEmoji] = useState('🐟');
-  const [obstacleEmoji, setObstacleEmoji] = useState('🦈');
-  const [lifeEmoji, setLifeEmoji] = useState('❤️');
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [gameType, setGameType] = useState<GameType>('avoidObstacle');
+  // Dynamically choose the game-specific settings and logic
   const gameCore = useGameCore({ settingsVisible });
-  const game = gameHooks[gameType]({
-    gameCore,
-    playerEmoji,
-    obstacleEmoji,
-    settingsVisible,
+  const { gameLogic, gameSettings, SettingsGameDialog } = gameHooks[gameType]({
+    settingsVisible, setSettingsVisible,
+    gameCore
   });
 
-
-  const saveCustomEmojis = (newFish: string, newShark: string, newHeart: string) => {
-    setPlayerEmoji(newFish);
-    setObstacleEmoji(newShark);
-    setLifeEmoji(newHeart);
-    setSettingsVisible(false);
-  };
-
+  // Handle game selection change
   const saveGameChosen = (gameChosen: GameType) => {
     setGameType(gameChosen);
   };
 
   return {
-    playerEmoji,
-    obstacleEmoji,
-    lifeEmoji,
     settingsVisible,
     setSettingsVisible,
-    saveCustomEmojis,
     saveGameChosen,
-    game,
+    game: gameLogic,
+    gameSettings,
+    SettingsGameDialog,
     gameType,
   };
 };

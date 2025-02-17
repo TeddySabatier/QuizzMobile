@@ -36,13 +36,7 @@ const QuizzDialog: React.FC<QuizzDialogProps> = ({ visible, isGameOver, onAnswer
   }, [visible]);
 
   console.log(correctAnswer)
-  const handleAnswer = (answer: string) => {
-    if (answer === correctAnswer) {
-      onAnswer(true); // Give an extra life
-    } else {
-      onAnswer(false); // Restart the game
-    }
-  };
+  const handleAnswer = (answer: string) => onAnswer(answer === correctAnswer);
 
   return (
     <Modal animationType="slide" transparent visible={visible}>

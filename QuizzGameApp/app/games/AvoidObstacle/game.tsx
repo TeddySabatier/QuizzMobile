@@ -3,7 +3,7 @@ import { Animated, Dimensions } from 'react-native';
 
 import { GameCore } from '@/hooks/useGameCore';
 
-interface useAvoidObstacleGameProps {
+interface useGameProps {
   playerEmoji: string;
   obstacleEmoji: string;
   settingsVisible: boolean;
@@ -13,7 +13,7 @@ interface useAvoidObstacleGameProps {
 const { width } = Dimensions.get('window');
 const movingPlayerX = width / 4;
 
-const useAvoidObstacleGame = ({ playerEmoji, obstacleEmoji, settingsVisible, gameCore }: useAvoidObstacleGameProps) => {
+const useGame = ({ playerEmoji, obstacleEmoji, settingsVisible, gameCore }: useGameProps) => {
   const [countdown, setCountdown] = useState(5); // Timer state for countdown
   const [isTouching, setIsTouching] = useState(false);
   const [obstacles, setObstacles] = useState<{ id: number; left: Animated.Value; hasHit: boolean }[]>([]);
@@ -146,4 +146,4 @@ const useAvoidObstacleGame = ({ playerEmoji, obstacleEmoji, settingsVisible, gam
   };
 };
 
-export { useAvoidObstacleGame };
+export { useGame };

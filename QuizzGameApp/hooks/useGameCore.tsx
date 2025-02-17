@@ -42,10 +42,11 @@ const useGameCore = ({ settingsVisible }: { settingsVisible: boolean }): GameCor
     callback();
   };
 
+  console.log(lives)
   const onAnswer = ({ onWrongAnswer, onCorrectAnswer, restartGame }: { onWrongAnswer: () => void, onCorrectAnswer: () => void, restartGame: () => void }) => (isCorrect: Boolean) => {
     if (isCorrect) {
       onCorrectAnswer();
-    } else if (lives > 0 && !isCorrect) {
+    } else if (lives > 1 && !isCorrect && !isGameOver) {
       onWrongAnswer();
     } else if (lives === 1 && isGameOver && !isCorrect) {
       return restartGame();
