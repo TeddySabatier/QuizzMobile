@@ -1,11 +1,12 @@
+import { gamesConfig } from '@/hooks/useSettings';
 import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, Picker, ActivityIndicator } from 'react-native';
 
 interface SettingsDialogProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (gameType: 'avoidObstacle' | 'default', categoryId: number | null) => void;
-  defaultGameType: 'avoidObstacle' | 'default';
+  onSave: (gameType: 'AvoidObstacle' | 'default', categoryId: number | null) => void;
+  defaultGameName: 'AvoidObstacle' | 'default';
   defaultCategory: number | null;
   SettingsGameDialog: React.FC<{ visible: boolean; onClose: () => void }>;
   gameSettings: any;
@@ -17,12 +18,12 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
   visible,
   onClose,
   onSave,
-  defaultGameType,
+  defaultGameName,
   defaultCategory,
   SettingsGameDialog,
   gameSettings,
 }) => {
-  const [gameType, setGameType] = useState<'avoidObstacle' | 'default'>(defaultGameType);
+  const [gameType, setGameName] = useState<'AvoidObstacle' | 'default'>(defaultGameName);
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(defaultCategory);
   const [loadingCategories, setLoadingCategories] = useState<boolean>(true);
@@ -54,9 +55,10 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
           {/* Game Type Selection */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Select Game Type:</Text>
-            <Picker selectedValue={gameType} style={styles.picker} onValueChange={setGameType}>
-              <Picker.Item label="Avoid Obstacle" value="avoidObstacle" />
-              <Picker.Item label="Default Game" value="default" />
+            <Picker selectedValue={gameType} style={styles.picker} onValueChange={setGameName}>
+            {Object.values(gamesConfig).map(({ gameId, name }: {gameId: string, name: string}) => (
+              <Picker.Item  key={gameId} label={name} value={gameId} />
+            ))}
             </Picker>
           </View>
 

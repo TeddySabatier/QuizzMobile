@@ -1,0 +1,8 @@
+{
+  "name": "Avoid Obstacle",
+  "description": "Avoid the obstacles and get the highest score!",
+  "icon": "avoid_obstacle.png",
+  "gameId": "AvoidObstacle",
+  "gameType": "arcade",
+  "gamePath": "games/AvoidObstacle/AvoidObstacle.js"
+}

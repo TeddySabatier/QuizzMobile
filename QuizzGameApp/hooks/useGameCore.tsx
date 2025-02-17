@@ -24,11 +24,14 @@ const useGameCore = ({ settingsVisible }: { settingsVisible: boolean }): GameCor
     // Never loose life when the quiz or settings is visible
     if (isQuizToAnswer || settingsVisible) return;
 
-    if (lives > 1) {
-      setLives((prevLives) => prevLives - 1);
-    } else {
-      setIsGameOver(true);
-    }
+    setLives((prevLives) => { // Mandatory to use the previous state to check to setIsGameOver or lives stays at 3 for Tapper game
+      console.log('loseLife prevLives', prevLives);
+      if (prevLives > 1)
+        return prevLives - 1
+      else
+        setIsGameOver(true);
+      return prevLives;
+    });
   };
   const earnLife = (lives: Number | undefined) => setLives((prevLives) => prevLives + (Number(lives || 1)));
   const earnPoint = (points: Number | undefined) => setPoints((prevPoints) => prevPoints + (Number(points || 1)));
@@ -47,7 +50,7 @@ const useGameCore = ({ settingsVisible }: { settingsVisible: boolean }): GameCor
       onCorrectAnswer();
     } else if (lives > 1 && !isCorrect && !isGameOver) {
       onWrongAnswer();
-    } else if (lives === 1 && isGameOver && !isCorrect) {
+    } else if (lives <= 1 && isGameOver && !isCorrect) {
       return restartGame();
     }
 

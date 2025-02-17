@@ -1,0 +1,8 @@
+{
+  "name": "Tapper",
+  "Description": "Tap the screen as fast as you can!",
+  "icon": "tapper.png",
+  "gameId": "Tapper",
+  "gameType": "arcade",
+  "gamePath": "games/Tapper/Tapper.js"
+}

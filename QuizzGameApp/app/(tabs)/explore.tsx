@@ -1,9 +1,7 @@
 import React from 'react';
-import { Animated } from 'react-native';
 import useSettings from '../../hooks/useSettings';
 import QuizzDialog from '../../components/QuizzDialog';
 import SettingsDialog from '../../components/SettingsDialog';
-import useGameCore from '../../hooks/useGameCore';
 
 const GameScreen: React.FC = () => {
   const {
@@ -15,22 +13,8 @@ const GameScreen: React.FC = () => {
     Game,
     gameType,
     quizCategory,
-    saveGameTypeAndQuizCategory,
+    saveGameNameAndQuizCategory,
   } = useSettings();
-
-  const gameProps = game as {
-    movingPlayerX: number;
-    onCorrectAnswer: () => void;
-    onWrongAnswer: () => void;
-    isTouching: boolean;
-    isQuizToAnswer: boolean;
-    obstacles: { id: number; left: Animated.Value; hasHit: boolean; }[];
-    countdown: number;
-    handleTouchStart: () => void;
-    handleTouchEnd: () => void;
-    restartGame: () => void;
-    gameCore: ReturnType<typeof useGameCore>;
-  };
 
 
 
@@ -38,20 +22,20 @@ const GameScreen: React.FC = () => {
     <>
       <SettingsDialog
         visible={settingsVisible}
-        onSave={saveGameTypeAndQuizCategory}
+        onSave={saveGameNameAndQuizCategory}
         onClose={() => setSettingsVisible(false)}
         SettingsGameDialog={SettingsGameDialog}
-        defaultGameType={gameType}
+        defaultGameName={gameType}
         gameSettings={gameSettings}
       />
       <QuizzDialog
-        visible={gameProps.gameCore.isQuizToAnswer}
-        isGameOver={gameProps.gameCore.isGameOver}
-        onAnswer={gameProps.gameCore.onAnswer({ ...gameProps })}
+        visible={game.gameCore.isQuizToAnswer}
+        isGameOver={game.gameCore.isGameOver}
+        onAnswer={game.gameCore.onAnswer({ ...game })}
         quizCategory={quizCategory}
       />
       <Game
-        {...gameProps}
+        {...game}
         gameSettings={gameSettings}
         settingsVisible={settingsVisible}
         setSettingsVisible={setSettingsVisible}
