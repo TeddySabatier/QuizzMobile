@@ -42,7 +42,6 @@ const useGameCore = ({ settingsVisible }: { settingsVisible: boolean }): GameCor
     callback();
   };
 
-  console.log(lives)
   const onAnswer = ({ onWrongAnswer, onCorrectAnswer, restartGame }: { onWrongAnswer: () => void, onCorrectAnswer: () => void, restartGame: () => void }) => (isCorrect: Boolean) => {
     if (isCorrect) {
       onCorrectAnswer();

@@ -5,6 +5,7 @@ interface QuizzDialogProps {
   visible: boolean;
   isGameOver: boolean;
   onAnswer: (isCorrect: Boolean) => void;
+  quizCategory: number | null;
 }
 
 interface TriviaQuestion {
@@ -13,14 +14,14 @@ interface TriviaQuestion {
   incorrect_answers: string[];
 }
 
-const QuizzDialog: React.FC<QuizzDialogProps> = ({ visible, isGameOver, onAnswer }) => {
+const QuizzDialog: React.FC<QuizzDialogProps> = ({ visible, isGameOver, onAnswer, quizCategory }) => {
   const [question, setQuestion] = useState<string | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
 
   useEffect(() => {
     if (visible) {
-      fetch('https://opentdb.com/api.php?amount=1&type=multiple')
+      fetch('https://opentdb.com/api.php?amount=1&type=multiple' + (quizCategory ? `&category=${quizCategory}` : ''))
         .then((response) => response.json())
         .then((data) => {
           if (data.results.length > 0) {
@@ -35,7 +36,6 @@ const QuizzDialog: React.FC<QuizzDialogProps> = ({ visible, isGameOver, onAnswer
     }
   }, [visible]);
 
-  console.log(correctAnswer)
   const handleAnswer = (answer: string) => onAnswer(answer === correctAnswer);
 
   return (

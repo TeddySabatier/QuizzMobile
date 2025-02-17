@@ -11,6 +11,8 @@ interface SettingsProps {
   gameSettings: ReturnType<typeof avoidObstacle.useGameSettings>;
   SettingsGameDialog: React.FC;
   gameType: GameType;
+  quizCategory: number | null;
+  saveGameTypeAndQuizCategory: (gameType: GameType, categoryId: number | null) => void;
 }
 
 export type GameType = 'avoidObstacle' | 'default';
@@ -42,6 +44,7 @@ const gameHooks: Record<GameType, GameHook> = {
 const useSettings = (): SettingsProps => {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [gameType, setGameType] = useState<GameType>('avoidObstacle');
+  const [quizCategory, setQuizCategory] = useState<number | null>(null);
   // Dynamically choose the game-specific settings and logic
   const gameCore = useGameCore({ settingsVisible });
   const { gameLogic, gameSettings, SettingsGameDialog } = gameHooks[gameType]({
@@ -54,6 +57,11 @@ const useSettings = (): SettingsProps => {
     setGameType(gameChosen);
   };
 
+  const saveGameTypeAndQuizCategory = (gameType: GameType, categoryId: number | null) => {
+    console.log('Game type:', gameType, 'Category ID:', categoryId);
+    setGameType(gameType);
+    setQuizCategory(categoryId);
+  }
   return {
     settingsVisible,
     setSettingsVisible,
@@ -62,6 +70,8 @@ const useSettings = (): SettingsProps => {
     gameSettings,
     SettingsGameDialog,
     gameType,
+    quizCategory,
+    saveGameTypeAndQuizCategory
   };
 };
 

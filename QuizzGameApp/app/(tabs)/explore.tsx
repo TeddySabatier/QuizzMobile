@@ -20,7 +20,9 @@ const GameScreen: React.FC = () => {
     game,
     gameSettings,
     SettingsGameDialog,
-    gameType
+    gameType, 
+    quizCategory,
+    saveGameTypeAndQuizCategory
   } = useSettings();
 
   const {
@@ -61,6 +63,7 @@ const GameScreen: React.FC = () => {
 
       <SettingsDialog
         visible={settingsVisible}
+        onSave={saveGameTypeAndQuizCategory}
         onClose={() => setSettingsVisible(false)}
         SettingsGameDialog={SettingsGameDialog}
         defaultGameType={gameType}
@@ -75,6 +78,7 @@ const GameScreen: React.FC = () => {
           onWrongAnswer,
           restartGame
         })}
+        quizCategory={quizCategory}
       />
 
       <Text style={styles.statusText}>{`Points: ${gameCore.points}`}</Text>

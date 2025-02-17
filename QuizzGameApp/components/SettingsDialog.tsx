@@ -1,28 +1,49 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Picker } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Picker, ActivityIndicator } from 'react-native';
 
 interface SettingsDialogProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (gameType: 'avoidObstacle' | 'default') => void;
+  onSave: (gameType: 'avoidObstacle' | 'default', categoryId: number | null) => void;
   defaultGameType: 'avoidObstacle' | 'default';
-  SettingsGameDialog: React.FC;
+  defaultCategory: number | null;
+  SettingsGameDialog: React.FC<{ visible: boolean; onClose: () => void }>;
   gameSettings: any;
 }
 
-const SettingsDialog: React.FC<SettingsDialogProps> = ({ visible, onClose, onSave, defaultGameType, SettingsGameDialog, gameSettings }) => {
+const TRIVIA_CATEGORIES_URL = 'https://opentdb.com/api_category.php';
+
+const SettingsDialog: React.FC<SettingsDialogProps> = ({
+  visible,
+  onClose,
+  onSave,
+  defaultGameType,
+  defaultCategory,
+  SettingsGameDialog,
+  gameSettings,
+}) => {
   const [gameType, setGameType] = useState<'avoidObstacle' | 'default'>(defaultGameType);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(defaultCategory);
+  const [loadingCategories, setLoadingCategories] = useState<boolean>(true);
+  const [isGameSettingsVisible, setIsGameSettingsVisible] = useState(false);
 
-  // State to handle sub-menu visibility for customizing the emoji
-  const [isEmojiSubMenuVisible, setIsEmojiSubMenuVisible] = useState(false);
+  // Fetch trivia categories from Open Trivia API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(TRIVIA_CATEGORIES_URL);
+        const data = await response.json();
+        setCategories(data.trivia_categories || []);
+      } catch (error) {
+        console.error('Error fetching trivia categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
 
-  // Function to handle game type change
-  const handleGameTypeChange = (selectedGameType: 'avoidObstacle' | 'default') => {
-    setGameType(selectedGameType);
-
-    // Close sub-menu when game type changes
-    setIsEmojiSubMenuVisible(false);
-  };
+    fetchCategories();
+  }, []);
 
   return (
     <Modal animationType="slide" transparent visible={visible}>
@@ -33,44 +54,49 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ visible, onClose, onSav
           {/* Game Type Selection */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Select Game Type:</Text>
-            <Picker
-              selectedValue={gameType}
-              style={styles.picker}
-              onValueChange={handleGameTypeChange}
-            >
+            <Picker selectedValue={gameType} style={styles.picker} onValueChange={setGameType}>
               <Picker.Item label="Avoid Obstacle" value="avoidObstacle" />
               <Picker.Item label="Default Game" value="default" />
             </Picker>
           </View>
 
-          {/* Show Sub-menu for Emoji Customization */}
-          <TouchableOpacity
-            style={styles.subMenuButton}
-            onPress={() => setIsEmojiSubMenuVisible(true)}
-          >
-            <Text style={styles.subMenuText}>Game menu</Text>
+          {/* Trivia Category Selection */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Select Trivia Category:</Text>
+            {loadingCategories ? (
+              <ActivityIndicator size="small" color="blue" />
+            ) : (
+              <Picker selectedValue={selectedCategory} style={styles.picker} onValueChange={setSelectedCategory}>
+                <Picker.Item label="Any Category" value={null} />
+                {categories.map((category) => (
+                  <Picker.Item key={category.id} label={category.name} value={category.id} />
+                ))}
+              </Picker>
+            )}
+          </View>
+
+          {/* Open Sub-Modal for Game Settings */}
+          <TouchableOpacity style={styles.subMenuButton} onPress={() => setIsGameSettingsVisible(true)}>
+            <Text style={styles.subMenuText}>Open Game Settings</Text>
           </TouchableOpacity>
 
-          {isEmojiSubMenuVisible && 
-            <SettingsGameDialog 
-              {...gameSettings}
-              visible={isEmojiSubMenuVisible}
-              onClose={() => setIsEmojiSubMenuVisible(false)}
-            />
-          }
+          {/* Sub-Modal for Game Settings */}
+          {isGameSettingsVisible && (
+            <SettingsGameDialog visible={isGameSettingsVisible} onClose={() => setIsGameSettingsVisible(false)} {...gameSettings} />
+          )}
 
-          {/* Save Game Type Selection */}
+          {/* Save Button */}
           <TouchableOpacity
             style={styles.saveButton}
             onPress={() => {
-              onSave(gameType); // Save the selected game type
-              onClose(); // Close the main dialog
+              onSave(gameType, selectedCategory);
+              onClose();
             }}
           >
-            <Text style={styles.saveText}>Save Game Type and Categories</Text>
+            <Text style={styles.saveText}>Save Game Settings</Text>
           </TouchableOpacity>
 
-          {/* Close Main Dialog */}
+          {/* Close Button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeText}>Close</Text>
           </TouchableOpacity>
@@ -125,19 +151,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'black',
-  },
-  subMenu: {
-    marginTop: 20,
-    backgroundColor: '#f7f7f7',
-    padding: 10,
-    borderRadius: 5,
-    width: '100%',
-    alignItems: 'center',
-  },
-  subMenuTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
   },
   saveButton: {
     backgroundColor: 'black',
