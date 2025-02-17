@@ -1,4 +1,4 @@
 import { useGameSettings, SettingsDialog } from "./gameSettings";
-import { useGame } from "./game";
+import { useGame, Game } from "./game";
 
-export { useGame, useGameSettings, SettingsDialog };
+export { useGame, Game, useGameSettings, SettingsDialog };

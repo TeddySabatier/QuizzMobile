@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Animated, Dimensions } from 'react-native';
+import { View, TouchableOpacity, Text, Animated, StyleSheet, Dimensions } from 'react-native';
 
-import { GameCore } from '@/hooks/useGameCore';
+import useGameCore, { GameCore } from '@/hooks/useGameCore';
 
 interface useGameProps {
   playerEmoji: string;
@@ -146,4 +146,123 @@ const useGame = ({ playerEmoji, obstacleEmoji, settingsVisible, gameCore }: useG
   };
 };
 
-export { useGame };
+
+const CustomIcon = ({ lifeEmoji }: { lifeEmoji: string }) => {
+  return (
+    <View style={styles.viewIcon}>
+      <Text style={styles.textIcon}>{lifeEmoji}</Text>
+    </View>
+  );
+};
+
+const Game = ({
+  movingPlayerX,
+  isTouching,
+  obstacles,
+  countdown,
+  handleTouchStart,
+  handleTouchEnd,
+  gameCore,
+  setSettingsVisible,
+  gameSettings
+}: {
+  movingPlayerX: number;
+  isTouching: boolean;
+  isQuizToAnswer: boolean;
+  obstacles: { id: number; left: Animated.Value; hasHit: boolean; }[];
+  countdown: number;
+  handleTouchStart: () => void;
+  handleTouchEnd: () => void;
+  gameCore: ReturnType<typeof useGameCore>;
+  setSettingsVisible: (visible: boolean) => void;
+  gameSettings: any;
+}) => {
+
+  return (
+    <TouchableOpacity
+      onPressIn={handleTouchStart}
+      onPressOut={handleTouchEnd}
+      style={styles.container}
+      activeOpacity={1}
+    >
+      <TouchableOpacity style={styles.settingsButton} onPress={() => setSettingsVisible(true)}>
+        <Text style={styles.settingsIcon}>⚙️</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.statusText}>{`Points: ${gameCore.points}`}</Text>
+
+      <View style={styles.livesContainer}>
+        {!gameCore.isGameOver && Array.from({ length: Number(gameCore.lives) }).map((_, index) => <CustomIcon key={index} lifeEmoji={gameSettings.lifeEmoji} />)}
+      </View>
+
+      {!gameCore.isGameOver && <Text style={[styles.movingPlayer, { left: movingPlayerX, transform: [{ scaleX: isTouching ? 1 : -1 }] }]}>{gameSettings.playerEmoji}</Text>}
+
+      {obstacles.map((obstacle) => (
+        <Animated.View key={obstacle.id} style={[styles.obstacle, { left: obstacle.left }]}>
+          <Text style={styles.obstacleEmoji}>{gameSettings.obstacleEmoji}</Text>
+        </Animated.View>
+      ))}
+      <Text style={styles.timerText}>{`Time Left: ${countdown}s`}</Text>
+    </TouchableOpacity>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  movingPlayer: {
+    fontSize: 40,
+    position: 'absolute',
+    top: 100,
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+  },
+  settingsIcon: {
+    fontSize: 30,
+  },
+  statusText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  gameOverText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: 'red',
+    fontFamily: 'Creepster', // Use Gothic font for Game Over text
+  },
+  timerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  obstacle: {
+    position: 'absolute',
+    top: 100,
+  },
+  obstacleEmoji: {
+    fontSize: 40,
+  },
+  livesContainer: {
+    position: 'absolute',
+    top: 20,
+    flexDirection: 'row',
+  },
+  viewIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 5,
+  },
+  textIcon: {
+    fontSize: 24,
+  },
+});
+
+export { useGame, Game };
